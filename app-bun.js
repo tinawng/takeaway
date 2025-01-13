@@ -1,13 +1,15 @@
-import { extname } from "path"
-import { walk } from "@root/walk"
+import { readdir } from "node:fs/promises"
+import path from "node:path"
 
 // 🗃️ Load everything in memory
-const files = new Set()
-await walk("./dist/", async (err, path, file) => {
-    if (err) throw err
-    if (file.isFile()) files.add(path.replace("dist", ""))
-    
+let files = await readdir(path.resolve(import.meta.dir, "dist"), {
+    withFileTypes: true,
+    recursive: true,
 })
+files = new Set(files
+    .filter(path => path.isFile())
+    .map(({ parentPath, name }) => path.join(parentPath.replace(path.join(import.meta.dir, "dist"), "/"), name))
+)
 
 const mime_types = new Map([
     [".html", "text/html"],
@@ -36,17 +38,17 @@ export default {
         const response_headers = {}
 
         // 🔥 Sanitize
-        const { pathname: path } = new URL(encodeURI(request.url))
+        const { pathname } = new URL(encodeURI(request.url))
         const accepted_encodings = request.headers.get("accept-encoding")?.replace(/[^a-zA-Z0-9"#$%&'()*+,-./:;=?@[\]_ ]/g, "")
 
         // ♻️ Handle implicit index.html request
-        let ext_name = String(extname(path)).toLowerCase()
+        let ext_name = String(path.extname(pathname)).toLowerCase()
         let file_path
         if (!ext_name) {
-            file_path = path.endsWith("/") ? `${path}index.html` : `${path}/index.html`
+            file_path = pathname.endsWith("/") ? `${pathname}index.html` : `${pathname}/index.html`
             ext_name = ".html"
         }
-        else file_path = path
+        else file_path = pathname
 
         // 📝 Set file type
         const content_type = mime_types.get(ext_name) || "application/octet-stream"

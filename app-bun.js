@@ -36,7 +36,7 @@ export default {
         const response_headers = {}
 
         // 🔥 Sanitize
-        const path = new URL(request.url).pathname
+        const { pathname: path } = new URL(encodeURI(request.url))
         const accepted_encodings = request.headers.get("accept-encoding")?.replace(/[^a-zA-Z0-9"#$%&'()*+,-./:;=?@[\]_ ]/g, "")
 
         // ♻️ Handle implicit index.html request

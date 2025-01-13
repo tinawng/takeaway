@@ -38,7 +38,7 @@ function handler(request, response) {
     }
 
     // 🔥 Sanitize
-    const path = encodeURI(request.url)
+    const { pathname: path } = new URL(`http://localhost${encodeURI(request.url)}`)
     const accepted_encodings = request.headers["accept-encoding"]?.replace(/[^a-zA-Z0-9"#$%&'()*+,-./:;=?@[\]_ ]/g, "")
 
     // ♻️ Handle implicit index.html request
@@ -49,7 +49,7 @@ function handler(request, response) {
         ext_name = ".html"
     }
     else file_path = path
-
+    
     // 📝 Set file type
     const content_type = mime_types.get(ext_name) || "application/octet-stream"
     response.setHeader("Content-Type", content_type)
